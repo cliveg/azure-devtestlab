@@ -40,7 +40,7 @@
 		}
 	},
 	"variables": {
-		"DTLEnvironStoreName": "[toLower([concat(parameters('DTLEnvironVmName'), 'storename')])]",
+		"DTLEnvironStoreName": "[toLower(concat(parameters('DTLEnvironVmName'), 'storename'))]",
 		"DTLEnvironVmImagePublisher": "MicrosoftWindowsServer",
 		"DTLEnvironVmImageOffer": "WindowsServer",
 		"DTLEnvironVmOSDiskName": "[concat(parameters('DTLEnvironVmName'), 'OSDisk')]",
