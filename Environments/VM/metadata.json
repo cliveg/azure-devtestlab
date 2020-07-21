@@ -1,0 +1,6 @@
+{
+  "itemDisplayName": "Virtual Machine",
+  "githubUsername": "Microsoft",
+  "description": "A Virtual Machine.",
+  "summary": "This template Deploys a Virtual Machine to the Lab VNET."
+}
