@@ -6,11 +6,9 @@
 			"type": "string",
 			"defaultValue": "Standard_LRS",
 			"allowedValues": [
-				"Standard_LRS",
-				"Standard_ZRS",
-				"Standard_GRS",
-				"Standard_RAGRS",
-				"Premium_LRS"
+                "Standard_LRS",
+                "Standard_GRS",
+                "Premium_LRS"
 			]
 		},
 		"DTLEnvironVmName": {
@@ -26,12 +24,11 @@
 		},
 		"DTLEnvironVmOsVersion": {
 			"type": "string",
-			"defaultValue": "2012-R2-Datacenter",
+			"defaultValue": "2019-Datacenter",
 			"allowedValues": [
-				"2008-R2-SP1",
-				"2012-Datacenter",
-				"2012-R2-Datacenter",
-				"Windows-Server-Technical-Preview"
+                "2019-Datacenter",
+				"2016-Datacenter",
+				"2012-R2-Datacenter"
 			]
 		},
 		"DTLSubnetId": {
@@ -45,7 +42,6 @@
 		"DTLEnvironVmImageOffer": "WindowsServer",
 		"DTLEnvironVmOSDiskName": "[concat(parameters('DTLEnvironVmName'), 'OSDisk')]",
 		"DTLEnvironVmSize": "Standard_D2_v2",
-		"DTLEnvironVmStorageAccountContainerName": "vhds",
 		"DTLEnvironVmNicName": "[concat(parameters('DTLEnvironVmName'), 'NetworkInterface')]"
 	},
 	"resources": [{
@@ -87,7 +83,7 @@
 			"name": "[parameters('DTLEnvironVmName')]",
 			"type": "Microsoft.Compute/virtualMachines",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "2019-03-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('DTLEnvironStoreName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces', variables('DTLEnvironVmNicName'))]"
@@ -113,12 +109,14 @@
 					},
 					"osDisk": {
 						"name": "[variables('DTLEnvironVmOSDiskName')]",
-						"vhd": {
-							"uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('DTLEnvironStoreName')), '2016-01-01').primaryEndpoints.blob, variables('DTLEnvironVmStorageAccountContainerName'), '/', variables('DTLEnvironVmOSDiskName'), '.vhd')]"
-						},
-						"caching": "ReadWrite",
-						"createOption": "FromImage"
-					}
+                        "caching": "ReadWrite",
+                        "osType": "Windows",
+                        "createOption": "FromImage",
+                        "diskSizeGB": 128,
+                        "managedDisk": {
+                        "storageAccountType": "[parameters('DTLEnvironVmStoretype')]"
+                        }
+                    }                        
 				},
 				"networkProfile": {
 					"networkInterfaces": [{
