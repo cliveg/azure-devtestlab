@@ -37,27 +37,13 @@
 		}
 	},
 	"variables": {
-		"DTLEnvironStoreName": "[toLower(concat(parameters('DTLEnvironVmName'), 'storename'))]",
 		"DTLEnvironVmImagePublisher": "MicrosoftWindowsServer",
 		"DTLEnvironVmImageOffer": "WindowsServer",
 		"DTLEnvironVmOSDiskName": "[concat(parameters('DTLEnvironVmName'), 'OSDisk')]",
 		"DTLEnvironVmSize": "Standard_D2_v2",
 		"DTLEnvironVmNicName": "[concat(parameters('DTLEnvironVmName'), 'NetworkInterface')]"
 	},
-	"resources": [{
-			"name": "[variables('DTLEnvironStoreName')]",
-			"type": "Microsoft.Storage/storageAccounts",
-			"location": "[resourceGroup().location]",
-			"apiVersion": "2016-01-01",
-			"sku": {
-				"name": "[parameters('DTLEnvironVmStoretype')]"
-			},
-			"dependsOn": [],
-			"tags": {
-				"displayName": "[variables('DTLEnvironStoreName')]"
-			},
-			"kind": "Storage"
-		},
+	"resources": [
 		{
 			"name": "[variables('DTLEnvironVmNicName')]",
 			"type": "Microsoft.Network/networkInterfaces",
@@ -85,7 +71,6 @@
 			"location": "[resourceGroup().location]",
 			"apiVersion": "2019-03-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('DTLEnvironStoreName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces', variables('DTLEnvironVmNicName'))]"
 			],
 			"tags": {
