@@ -1,0 +1,216 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "The prefix to use in resource names."
+            }
+        },
+        "agentCount": {
+            "type": "int"
+        },
+        "agentSize": {
+            "type": "string"
+        },
+        "enableDevSpaces": {
+            "type": "bool"
+        },
+        "existingsubnetId": {
+            "type": "string"
+        },
+        "oicApplicationId": {
+            "type": "string"
+        },
+        "oicClientId": {
+            "type": "string"
+        },
+        "oicClientSecret": {
+            "type": "securestring"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "clusterService": "[if(parameters('enableDevSpaces'), 'DevSpaces', 'Kubernetes')]",
+        "clusterName": "[concat(parameters('resourcePrefix'), '-ds')]",
+        "clusterVersion": "1.16.10",
+        "registryService": "ContainerRegistry",
+        "registryName": "[replace(concat(parameters('resourcePrefix'), '-cr'), '-', '')]",
+        "analyticsName": "[concat(parameters('resourcePrefix'), '-la')]",
+        "keyVaultName": "[concat(parameters('resourcePrefix'), '-kv')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "name": "[variables('analyticsName')]",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                },
+                "retentionInDays": 180
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[variables('keyVaultName')]",
+            "apiVersion": "2015-06-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [ ],
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                }
+            }
+        },
+        {
+            "name": "[variables('registryName')]",
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "hidden-ServiceProvider": "[variables('registryService')]"
+            },
+            "sku": {
+                "name": "Basic",
+                "tier": "Basic"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            },
+            "resources": [
+                {
+                    "name": "[guid(concat(resourceId('Microsoft.ContainerRegistry/registries', variables('registryName')), '/', parameters('oicClientId')))]",
+                    "type": "Microsoft.Authorization/roleAssignments",
+                    "apiVersion": "2017-09-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ContainerRegistry/registries', variables('registryName'))]"
+                    ],
+                    "properties": {
+                      "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                      "principalId": "[parameters('oicClientId')]"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('clusterName')]",
+            "apiVersion": "2018-03-31",
+            "type": "Microsoft.ContainerService/managedClusters",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('analyticsName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "tags": {
+                "hidden-ServiceVault": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+                "hidden-ServiceProvider": "[variables('clusterService')]"
+            },
+            "properties": {
+                "kubernetesVersion": "[variables('clusterVersion')]",
+                "enableRBAC": true,
+                "dnsPrefix": "[variables('clusterName')]",
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "osDiskSizeGB": 0,
+                        "count": "[parameters('agentCount')]",
+                        "vmSize": "[parameters('agentSize')]",
+                        "osType": "Linux",
+                        "storageProfile": "ManagedDisks"
+                    }
+                ],
+                "servicePrincipalProfile": {
+                    "ClientId": "[parameters('oicApplicationId')]",
+                    "Secret": "[parameters('oicClientSecret')]"
+                },
+                "networkProfile": {
+                    "networkPlugin": "kubenet",
+                    "loadBalancerSku": "standard",
+                    "networkPolicy": "calico",
+                    "serviceCidr": "10.0.0.0/16",
+                    "dnsServiceIP": "10.0.0.10",
+                    "dockerBridgeCidr": "172.17.0.1/16"                    
+                },
+                "apiServerAccessProfile": {
+                    "enablePrivateCluster": {
+                        "enabled": true
+                    }
+                },                
+                "addonProfiles": {
+                    "httpApplicationRouting": {
+                        "enabled": true
+                    },
+                    "omsagent": {
+                        "enabled": false
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/ServiceUsername')]",
+            "apiVersion": "2015-06-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[variables('clusterName')]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/ServicePassword')]",
+            "apiVersion": "2015-06-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[listClusterAdminCredential(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2018-03-31').kubeconfigs[0].value]"
+            }
+        },
+        {
+            "condition": "[parameters('enableDevSpaces')]",
+            "apiVersion": "2019-04-01",
+            "type": "Microsoft.DevSpaces/controllers",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('clusterName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]"
+            ],
+            "properties": {
+                "hostSuffix": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')),'2018-03-31').addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]",
+                "targetContainerHostResourceId": "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+                "targetContainerHostCredentialsBase64": "[listClusterAdminCredential(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2017-08-31').kubeconfigs[0].value]"
+            },
+            "sku": {
+                "name": "S1"
+            }
+        }
+    ],
+    "outputs": {
+        "hostSuffix": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')),'2018-03-31').addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]"
+        },
+        "hostCredentials": {
+            "type": "string",
+            "value": "[listClusterAdminCredential(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2018-03-31').kubeconfigs[0].value]"
+        }
+    }
+}
