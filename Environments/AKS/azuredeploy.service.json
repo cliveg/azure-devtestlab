@@ -140,10 +140,7 @@
                         "enabled": true
                     },
                     "omsagent": {
-                        "enabled": true,
-                        "config": {
-                            "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('analyticsName'))]"
-                        }
+                        "enabled": false
                     }
                 }
             }
