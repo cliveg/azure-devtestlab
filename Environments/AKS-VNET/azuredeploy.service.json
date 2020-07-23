@@ -128,7 +128,8 @@
                         "count": "[parameters('agentCount')]",
                         "vmSize": "[parameters('agentSize')]",
                         "osType": "Linux",
-                        "storageProfile": "ManagedDisks"
+                        "storageProfile": "ManagedDisks",
+                        "vnetSubnetID": "[parameters('existingsubnetId')]"
                     }
                 ],
                 "servicePrincipalProfile": {
