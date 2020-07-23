@@ -1,0 +1,158 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "Agent Count": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": {
+                "description": "The number of agent nodes for the cluster."
+            },
+            "minValue": 1,
+            "maxValue": 50
+        },
+        "Agent Size": {
+            "type": "string",
+            "defaultValue": "Standard_B2ms",
+            "allowedValues": [
+                "Standard_B2ms",
+                "Standard_B4ms",
+                "Standard_B8ms",
+                "Standard_D2s_v3",
+                "Standard_D4s_v3"
+            ],
+            "metadata": {
+                "description": "The size of the agent nodes Virtual Machines."
+            }
+        },
+        "Enable DevSpaces": {
+            "type": "bool",
+            "defaultValue": "false",
+            "metadata": {
+                "description": "Enable DevSpaces at the Kubernetes cluster."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": ""
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "resourcePrefix": "[toLower(concat('aks-', take(uniqueString(resourceGroup().id), 6)))]",
+        "prepDeploymentName": "[concat(deployment().name, '-', if(variables('labContextAvailable'), 'echo', 'nolab'))]",
+        "labContextAvailable": "[and(variables('labKeyVaultEnabled'), variables('labSubnetEnabled'))]",
+        "labKeyVaultId": "$(LabKeyVaultId)",
+        "labKeyVaultEnabled": "[startsWith(variables('labKeyVaultId'), subscription().id)]",
+        "labSubnetId": "$(LabSubnetId)",
+        "labSubnetEnabled": "[startsWith(variables('labSubnetId'), subscription().id)]"
+    },
+    "resources": [
+        {
+            "condition": "[variables('labContextAvailable')]",
+            "apiVersion": "2017-05-10",
+            "name": "[concat(deployment().name, '-echo')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [],
+                    "outputs": {
+                        "keyvaultId": {
+                            "type": "string",
+                            "value": "[variables('labKeyVaultId')]"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[not(variables('labContextAvailable'))]",
+            "apiVersion": "2017-05-10",
+            "name": "[concat(deployment().name, '-nolab')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/azuredeploy.nolab.json', parameters('_artifactsLocationSasToken'))]"
+                },
+                "parameters": {
+                    "resourcePrefix": {
+                        "value": "[variables('resourcePrefix')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "[concat(deployment().name, '-service')]",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('prepDeploymentName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/azuredeploy.service.json', parameters('_artifactsLocationSasToken'))]"
+                },
+                "parameters": {
+                    "resourcePrefix": {
+                        "value": "[variables('resourcePrefix')]"
+                    },
+                    "agentCount": {
+                        "value": "[parameters('Agent Count')]"
+                    },
+                    "agentSize": {
+                        "value": "[parameters('Agent Size')]"
+                    },
+                    "enableDevSpaces": {
+                        "value": "[parameters('Enable DevSpaces')]"
+                    },
+                    "oicApplicationId": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[reference(variables('prepDeploymentName')).outputs.keyvaultId.value]"
+                            },
+                            "secretName": "EnvironmentPrincipalAppId"
+                        }
+                    },
+                    "oicClientId": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[reference(variables('prepDeploymentName')).outputs.keyvaultId.value]"
+                            },
+                            "secretName": "EnvironmentPrincipalId"
+                        }
+                    },
+                    "oicClientSecret": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[reference(variables('prepDeploymentName')).outputs.keyvaultId.value]"
+                            },
+                            "secretName": "EnvironmentPrincipalSecret"
+                        }
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
