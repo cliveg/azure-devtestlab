@@ -115,7 +115,7 @@
     },
     "variables": {
         "clusterService": "[if(parameters('enableDevSpaces'), 'DevSpaces', 'Kubernetes')]",
-        "clusterName": "[concat(parameters('name'), '-ds')]",
+        "clusterName": "[parameters('name')]",
         "clusterVersion": "1.16.10",
         "registryService": "ContainerRegistry",
         "registryName": "[replace(concat(parameters('name'), '-cr'), '-', '')]",
