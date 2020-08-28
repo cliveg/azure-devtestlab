@@ -15,7 +15,7 @@
             "metadata": {
                 "description": "Whether the AKS API server endpoint should have a private IP or public IP address"
             }            
-        }
+        },
         "vnetResourceGroupName": {
             "type": "string",
             "metadata": {
