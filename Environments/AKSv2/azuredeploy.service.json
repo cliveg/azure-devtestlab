@@ -279,7 +279,6 @@
             }
         },
         {
-            "condition": "[parameters('enableDevSpaces')]",
             "apiVersion": "[variables('apiVersion').rbac]",
             "type": "Microsoft.ContainerService/managedClusters/providers/roleAssignments",
             "name": "[concat(parameters('name'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('name'), 'Monitoring Metrics Publisher'))]",
