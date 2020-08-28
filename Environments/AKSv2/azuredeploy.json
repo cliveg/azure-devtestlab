@@ -108,7 +108,7 @@
                     "vnetResourceGroupName": {
                         "value": "[parameters('vnetResourceGroupName')]"
                     },
-                    "vnetName ": {
+                    "vnetName": {
                         "value": "[parameters('vnetName')]"
                     },
                     "vnetSubnetName": {
