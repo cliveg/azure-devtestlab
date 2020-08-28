@@ -9,6 +9,13 @@
                 "description": "Enable DevSpaces at the Kubernetes cluster."
             }
         },
+        "privateCluster": {
+            "type": "bool",
+            "defaultValue": "false",
+            "metadata": {
+                "description": "Whether the AKS API server endpoint should have a private IP or public IP address"
+            }            
+        }
         "vnetResourceGroupName": {
             "type": "string",
             "metadata": {
@@ -116,6 +123,9 @@
                     },                                        
                     "enableDevSpaces": {
                         "value": "[parameters('Enable DevSpaces')]"
+                    },
+                    "privateCluster":  {
+                        "value": "[parameters('privateCluster')]"
                     },
                     "_artifactsLocation": {
                         "value": "[parameters('_artifactsLocation')]"
