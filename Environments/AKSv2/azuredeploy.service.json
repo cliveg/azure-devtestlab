@@ -29,7 +29,7 @@
                 {
                     "name": "nodepool1",
                     "nodeCount": 3,
-                    "nodeVmSize": "Standard_D4_v3",
+                    "nodeVmSize": "Standard_D2_v3",
                     "availabilityZones": [
                         "1",
                         "2",
@@ -279,6 +279,7 @@
             }
         },
         {
+            "condition": "[parameters('enableDevSpaces')]",
             "apiVersion": "[variables('apiVersion').rbac]",
             "type": "Microsoft.ContainerService/managedClusters/providers/roleAssignments",
             "name": "[concat(parameters('name'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('name'), 'Monitoring Metrics Publisher'))]",
@@ -290,6 +291,7 @@
             }
         },
         {
+            "condition": "[parameters('enableDevSpaces')]",            
             "apiVersion": "[variables('apiVersion').deployments]",
             "type": "Microsoft.Resources/deployments",
             "name": "[concat(parameters('name'), '-vnet-subnet-rbac')]",
@@ -322,6 +324,7 @@
             }
         },
         {
+            "condition": "[parameters('enableDevSpaces')]",            
             "apiVersion": "[variables('apiVersion').deployments]",
             "type": "Microsoft.Resources/deployments",
             "name": "[concat(parameters('name'), '-acr-rbac')]",
