@@ -359,13 +359,13 @@
 
     ],
     "outputs": {
-        "hostSuffix": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')),'2018-03-31').addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]"
+        "name": {
+          "type": "string",
+          "value": "[parameters('name')]"
         },
-        "hostCredentials": {
-            "type": "string",
-            "value": "[listClusterAdminCredential(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2018-03-31').kubeconfigs[0].value]"
+        "resourceId": {
+          "type": "string",
+          "value": "[variables('outputs').resourceId]"
         }
     }
 }
