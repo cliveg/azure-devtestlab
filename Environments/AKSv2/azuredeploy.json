@@ -99,7 +99,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/azuredeploy.service.json', parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(replace(parameters('_artifactsLocation'),'artifacts', 'artifacts/artifacts'), '/azuredeploy.service.json', parameters('_artifactsLocationSasToken'))]"
                 },
                 "parameters": {
                     "name": {
