@@ -289,8 +289,7 @@
                 "scope": "[variables('outputs').resourceId]"
             }
         },
-        {
-            "condition": "[parameters('enableDevSpaces')]",            
+        {          
             "apiVersion": "[variables('apiVersion').deployments]",
             "type": "Microsoft.Resources/deployments",
             "name": "[concat(parameters('name'), '-vnet-subnet-rbac')]",
@@ -322,8 +321,7 @@
                 }
             }
         },
-        {
-            "condition": "[parameters('enableDevSpaces')]",            
+        {         
             "apiVersion": "[variables('apiVersion').deployments]",
             "type": "Microsoft.Resources/deployments",
             "name": "[concat(parameters('name'), '-acr-rbac')]",
